@@ -1,2 +1,2 @@
 default:
-	cp code.py /Volumes/CIRCUITPY/
+	cp src/code.py /Volumes/CIRCUITPY/
