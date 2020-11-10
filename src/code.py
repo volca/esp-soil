@@ -22,7 +22,7 @@ pwm.duty_cycle = 2 ** 15
 pin_soil = analogio.AnalogIn(IO9)
 soil_val = pin_soil.value
 print(soil_val)
-print(valmap(soil_val, MIN_SOIL_VAL, MAX_SOIL_VAL, 0, 100))
+print(valmap(soil_val, MIN_SOIL_VAL, MAX_SOIL_VAL, 100, 0))
 pin_soil.deinit()
 pwm.deinit()
 
