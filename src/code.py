@@ -4,6 +4,7 @@ import analogio
 import wifi
 from board import *
 from digitalio import DigitalInOut, Direction, Pull
+import wifimgr
 
 MAX_SOIL_VAL = 3515
 MIN_SOIL_VAL = 3414
@@ -27,3 +28,4 @@ pin_soil.deinit()
 pwm.deinit()
 
 print("hey world")
+wlan = wifimgr.get_connection()
