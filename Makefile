@@ -1,4 +1,7 @@
 default:
+	pio run
+
+flash:
 	pio run -t upload
 
 monitor:
