@@ -1,1 +1,1 @@
-esp soli sensor v3
+esp soli moisture sensor v3
