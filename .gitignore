@@ -1,3 +1,6 @@
 *.swp
 .DS_Store
 .pio
+build
+.ccls-cache
+sdkconfig*
