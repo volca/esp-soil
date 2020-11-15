@@ -1,9 +1,11 @@
 #include <Wire.h>
-//#include "driver/adc.h"
+#include "driver/adc.h"
 #include "driver/ledc.h"
 
 const int PIN_CLK   = 17;
 const int PIN_SOIL  = 9;
+
+#define NO_OF_SAMPLES   64          //Multisampling
 
 #define LEDC_LS_TIMER          LEDC_TIMER_1
 #define LEDC_LS_MODE           LEDC_LOW_SPEED_MODE
@@ -14,6 +16,20 @@ const int PIN_SOIL  = 9;
 
 // %50 duty: 2 ^ (LEDC_LS_DUTY_RES - 1) 
 #define LEDC_TEST_DUTY          (4)
+
+static const adc_channel_t channel = ADC_CHANNEL_8;     // GPIO7 if ADC1, GPIO17 if ADC2
+static const adc_bits_width_t width = ADC_WIDTH_BIT_13;
+static const adc_atten_t atten = ADC_ATTEN_DB_2_5;
+
+uint32_t getMoisture() {
+    uint32_t adc_reading = 0;
+    //Multisampling
+    for (int i = 0; i < NO_OF_SAMPLES; i++) {
+        adc_reading += adc1_get_raw((adc1_channel_t)channel);
+    }
+    adc_reading /= NO_OF_SAMPLES;
+    return adc_reading;
+}
 
 void setup() {
     Serial.begin(115200);
@@ -44,13 +60,13 @@ void setup() {
     };
     ledc_channel_config(&ledc_channel);
 
-    analogReadResolution(13);
-    analogSetAttenuation(ADC_2_5db);
+    //Configure ADC
+    adc1_config_width(width);
+    adc1_config_channel_atten((adc1_channel_t)channel, atten);
 }
 
 void loop() {
-    delay(50);
-    float adc_reading = analogRead(PIN_SOIL);
-    Serial.printf("loop %f\n", adc_reading);
+    int adc_reading = getMoisture();
+    Serial.printf("loop %d\n", adc_reading);
     delay(1000);
 }
