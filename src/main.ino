@@ -17,11 +17,14 @@ const int PIN_SOIL  = 9;
 // %50 duty: 2 ^ (LEDC_LS_DUTY_RES - 1) 
 #define LEDC_TEST_DUTY          (4)
 
+// I2C address for temperature sensor
+const int TMP_ADDR  = 0x48;
+
 static const adc_channel_t channel = ADC_CHANNEL_8;     // GPIO7 if ADC1, GPIO17 if ADC2
 static const adc_bits_width_t width = ADC_WIDTH_BIT_13;
 static const adc_atten_t atten = ADC_ATTEN_DB_2_5;
 
-uint32_t getMoisture() {
+uint32_t readMoisture() {
     uint32_t adc_reading = 0;
     //Multisampling
     for (int i = 0; i < NO_OF_SAMPLES; i++) {
@@ -29,6 +32,35 @@ uint32_t getMoisture() {
     }
     adc_reading /= NO_OF_SAMPLES;
     return adc_reading;
+}
+
+float readTemp() {
+    float temp;
+
+    const int sdaPin = 8;
+    const int sclPin = 10;
+    Wire.begin(sdaPin, sclPin);
+
+    Wire.beginTransmission(TMP_ADDR);
+    // Select Data Registers
+    Wire.write(0X00);
+
+    delay(500);
+  
+    // Request 2 bytes , Msb first
+    Wire.requestFrom(TMP_ADDR, 2 );
+    // Read temperature as Celsius (the default)
+    while(Wire.available()) {  
+        int msb = Wire.read();
+        int lsb = Wire.read();
+        Wire.endTransmission();
+
+        int rawtmp = msb << 8 |lsb;
+        int value = rawtmp >> 4;
+        temp = value * 0.0625;
+
+        return temp;
+    }
 }
 
 void setup() {
@@ -66,7 +98,8 @@ void setup() {
 }
 
 void loop() {
-    int adc_reading = getMoisture();
-    Serial.printf("loop %d\n", adc_reading);
+    int adc_reading = readMoisture();
+    float temp = readTemp();
+    Serial.printf("loop moisture: %d, temperature: %f\n", adc_reading, temp);
     delay(1000);
 }
