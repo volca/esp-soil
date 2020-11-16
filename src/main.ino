@@ -1,6 +1,7 @@
 #include <Wire.h>
 #include "driver/adc.h"
 #include "driver/ledc.h"
+#include "esp_adc_cal.h"
 
 const int PIN_CLK   = 17;
 const int PIN_SOIL  = 9;
@@ -17,18 +18,34 @@ const int PIN_SOIL  = 9;
 // %50 duty: 2 ^ (LEDC_LS_DUTY_RES - 1) 
 #define LEDC_TEST_DUTY          (4)
 
+#define DEFAULT_VREF            1100
+
 // I2C address for temperature sensor
 const int TMP_ADDR  = 0x48;
 
-static const adc_channel_t channel = ADC_CHANNEL_8;     // GPIO7 if ADC1, GPIO17 if ADC2
-static const adc_bits_width_t width = ADC_WIDTH_BIT_13;
-static const adc_atten_t atten = ADC_ATTEN_DB_2_5;
+const adc_channel_t      MOISTURE_CHANNEL    = ADC_CHANNEL_8;     // GPIO9
+const adc_bits_width_t   WIDTH               = ADC_WIDTH_BIT_13;
+const adc_atten_t        MOISTURE_ATTEN      = ADC_ATTEN_DB_2_5;
+
+const adc_channel_t      BATTERY_CHANNEL     = ADC_CHANNEL_6;     // GPIO7
+const adc_atten_t        BATTERY_ATTEN       = ADC_ATTEN_DB_11;
+
+float readBattery() {
+    uint32_t adc_reading = 0;
+
+    for (int i = 0; i < NO_OF_SAMPLES; i++) {
+        adc_reading += adc1_get_raw((adc1_channel_t)BATTERY_CHANNEL);
+    }
+    adc_reading /= NO_OF_SAMPLES;
+
+    return adc_reading;
+}
 
 uint32_t readMoisture() {
     uint32_t adc_reading = 0;
     //Multisampling
     for (int i = 0; i < NO_OF_SAMPLES; i++) {
-        adc_reading += adc1_get_raw((adc1_channel_t)channel);
+        adc_reading += adc1_get_raw((adc1_channel_t)MOISTURE_CHANNEL);
     }
     adc_reading /= NO_OF_SAMPLES;
     return adc_reading;
@@ -93,13 +110,15 @@ void setup() {
     ledc_channel_config(&ledc_channel);
 
     //Configure ADC
-    adc1_config_width(width);
-    adc1_config_channel_atten((adc1_channel_t)channel, atten);
+    adc1_config_width(WIDTH);
+    adc1_config_channel_atten((adc1_channel_t)MOISTURE_CHANNEL, MOISTURE_ATTEN);
+    adc1_config_channel_atten((adc1_channel_t)BATTERY_CHANNEL, BATTERY_ATTEN);
 }
 
 void loop() {
     int adc_reading = readMoisture();
     float temp = readTemp();
-    Serial.printf("loop moisture: %d, temperature: %f\n", adc_reading, temp);
+    float batt = readBattery();
+    Serial.printf("loop moisture: %d, temperature: %f batt: %f\n", adc_reading, temp, batt);
     delay(1000);
 }
