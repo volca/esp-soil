@@ -1,10 +1,22 @@
+#include <Arduino.h>
 #include <Wire.h>
 #include "driver/adc.h"
 #include "driver/ledc.h"
-#include "esp_adc_cal.h"
+#include "WiFi.h"
+#include <WiFiMulti.h>
+#include <FFat.h>
+
+FS* filesystem =      &FFat;
+#define FileFS        FFat
+#define FS_Name       "FFat"
+
+WiFiMulti wifiMulti;
 
 const int PIN_CLK   = 17;
 const int PIN_SOIL  = 9;
+
+const char* MY_SSID = "siyue2L-dong"; 
+const char* MY_PWD = "siyuexiongdi";
 
 #define NO_OF_SAMPLES   64          //Multisampling
 
@@ -29,6 +41,33 @@ const adc_atten_t        MOISTURE_ATTEN      = ADC_ATTEN_DB_2_5;
 
 const adc_channel_t      BATTERY_CHANNEL     = ADC_CHANNEL_6;     // GPIO7
 const adc_atten_t        BATTERY_ATTEN       = ADC_ATTEN_DB_11;
+
+#define SSID_MAX_LEN            32
+#define PASS_MAX_LEN            64
+
+#define NUM_WIFI_CREDENTIALS      2
+#define  CONFIG_FILENAME              F("/wifi_cred.dat")
+
+#define ESP_getChipId()   ((uint32_t)ESP.getEfuseMac())
+
+typedef struct
+{
+  char wifi_ssid[SSID_MAX_LEN];
+  char wifi_pw  [PASS_MAX_LEN];
+}  WiFi_Credentials;
+
+typedef struct
+{
+  WiFi_Credentials  WiFi_Creds [NUM_WIFI_CREDENTIALS];
+} WM_Config;
+
+WM_Config         WM_config;
+
+#define USE_AVAILABLE_PAGES     false
+
+#define USE_ESP_WIFIMANAGER_NTP     false
+
+#include <ESP_WiFiManager.h>
 
 float readBattery() {
     uint32_t adc_reading = 0;
@@ -80,9 +119,43 @@ float readTemp() {
     }
 }
 
+void connectWifi() {
+  Serial.print("Connecting to " + *MY_SSID);
+  WiFi.begin(MY_SSID, MY_PWD);
+  while (WiFi.status() != WL_CONNECTED) {
+      delay(1000);
+      Serial.print(".");
+  }
+  
+  Serial.println("");
+  Serial.println("Connected");
+  Serial.println("");  
+}
+
 void setup() {
     Serial.begin(115200);
     delay(10);
+
+    // Format FileFS if not yet
+    if (!FileFS.begin(true)) {
+        Serial.print(FS_Name);
+        Serial.println(F(" failed! AutoFormatting."));
+    }
+
+    ESP_WiFiManager ESP_wifiManager("APlant");
+    ESP_wifiManager.setDebugOutput(true);
+
+    String chipID = String(ESP_getChipId(), HEX);
+    chipID.toUpperCase();
+
+    // SSID and PW for Config Portal
+    String AP_SSID = "ESP_" + chipID + "_AutoConnectAP";
+    String AP_PASS = "MyESP_" + chipID;
+
+    if ( !ESP_wifiManager.startConfigPortal(AP_SSID.c_str(), AP_PASS.c_str()) )
+      Serial.println("Not connected to WiFi but continuing anyway.");
+    else
+      Serial.println("WiFi connected...yeey :)");
 
     // ledc
     // Set configuration of timer0 for high speed channels
