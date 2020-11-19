@@ -2,10 +2,19 @@
 #include <Wire.h>
 #include "driver/adc.h"
 #include "driver/ledc.h"
-#include <WiFiManager.h>
+#include <WiFiMulti.h>
+#include <HTTPClient.h>
+
+String API_KEY      = "<YOUR-API-KEY>";
+const char *MY_SSID = "<YOUR-SSID>"; 
+const char *MY_PWD  = "<YOUR-PASSWORD>";
+
+WiFiMulti wifiMulti;
 
 const int PIN_CLK   = 17;
 const int PIN_SOIL  = 9;
+
+#define SLEEP_TIME 1200 * 1000 * 1000
 
 #define NO_OF_SAMPLES   64          //Multisampling
 
@@ -28,6 +37,20 @@ const adc_atten_t        MOISTURE_ATTEN      = ADC_ATTEN_DB_2_5;
 
 const adc_channel_t      BATTERY_CHANNEL     = ADC_CHANNEL_6;     // GPIO7
 const adc_atten_t        BATTERY_ATTEN       = ADC_ATTEN_DB_11;
+
+void connectWifi() {
+  Serial.print("Connecting to " + *MY_SSID);
+  wifiMulti.addAP(MY_SSID, MY_PWD);
+
+  while(wifiMulti.run() != WL_CONNECTED) {
+      delay(1000);
+      Serial.print(".");
+  }
+  
+  Serial.println("");
+  Serial.println("Connected");
+  Serial.println("");  
+}
 
 float readBattery() {
     uint32_t adc_reading = 0;
@@ -81,9 +104,9 @@ float readTemp() {
 
 void setup() {
     Serial.begin(115200);
-    delay(10);
+    delay(1000);
 
-    WiFiManager wm;
+    WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
 
     // ledc
     // Set configuration of timer0 for high speed channels
@@ -114,12 +137,38 @@ void setup() {
     adc1_config_width(WIDTH);
     adc1_config_channel_atten((adc1_channel_t)MOISTURE_CHANNEL, MOISTURE_ATTEN);
     adc1_config_channel_atten((adc1_channel_t)BATTERY_CHANNEL, BATTERY_ATTEN);
+
+    connectWifi();
+    delay(2000);
+}
+
+void sendData(float batt, float temp, float soil_hum) {  
+    HTTPClient http;
+    http.begin("http://api.thingspeak.com/update");
+    http.addHeader("X-THINGSPEAKAPIKEY", API_KEY);
+
+    String postStr = API_KEY;
+    postStr += "&field1=";
+    postStr += String(batt);
+    postStr += "&field2=";
+    postStr += String(temp);
+    postStr += "&field3=";
+    postStr += String(soil_hum);
+    postStr += "\r\n\r\n";
+   
+    int httpCode = http.POST(postStr);
+    http.end();
+
+    Serial.printf("HTTP Response code=%d\n", httpCode);
 }
 
 void loop() {
-    int adc_reading = readMoisture();
+    int soil_hum = readMoisture();
     float temp = readTemp();
     float batt = readBattery();
-    Serial.printf("loop moisture: %d, temperature: %f batt: %f\n", adc_reading, temp, batt);
-    delay(1000);
+    Serial.printf("loop moisture: %d, temperature: %f batt: %f\n", soil_hum, temp, batt);
+    sendData(batt, temp, soil_hum);
+    Serial.printf("go to sleep\n");
+    ESP.deepSleep(SLEEP_TIME);
 }
+
