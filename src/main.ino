@@ -2,8 +2,6 @@
 #include <Wire.h>
 #include "driver/adc.h"
 #include "driver/ledc.h"
-#include <DNSServer.h>
-#include <WebServer.h>
 #include <WiFiManager.h>
 
 const int PIN_CLK   = 17;
