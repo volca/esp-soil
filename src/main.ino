@@ -7,9 +7,6 @@
 const int PIN_CLK   = 17;
 const int PIN_SOIL  = 9;
 
-const char* MY_SSID = "siyue2L-dong"; 
-const char* MY_PWD = "siyuexiongdi";
-
 #define NO_OF_SAMPLES   64          //Multisampling
 
 #define LEDC_LS_TIMER          LEDC_TIMER_1
@@ -22,8 +19,6 @@ const char* MY_PWD = "siyuexiongdi";
 // %50 duty: 2 ^ (LEDC_LS_DUTY_RES - 1) 
 #define LEDC_TEST_DUTY          (4)
 
-#define DEFAULT_VREF            1100
-
 // I2C address for temperature sensor
 const int TMP_ADDR  = 0x48;
 
@@ -33,14 +28,6 @@ const adc_atten_t        MOISTURE_ATTEN      = ADC_ATTEN_DB_2_5;
 
 const adc_channel_t      BATTERY_CHANNEL     = ADC_CHANNEL_6;     // GPIO7
 const adc_atten_t        BATTERY_ATTEN       = ADC_ATTEN_DB_11;
-
-#define SSID_MAX_LEN            32
-#define PASS_MAX_LEN            64
-
-#define NUM_WIFI_CREDENTIALS      2
-#define  CONFIG_FILENAME              F("/wifi_cred.dat")
-
-#define ESP_getChipId()   ((uint32_t)ESP.getEfuseMac())
 
 float readBattery() {
     uint32_t adc_reading = 0;
@@ -92,31 +79,11 @@ float readTemp() {
     }
 }
 
-void connectWifi() {
-  Serial.print("Connecting to " + *MY_SSID);
-  WiFi.begin(MY_SSID, MY_PWD);
-  while (WiFi.status() != WL_CONNECTED) {
-      delay(1000);
-      Serial.print(".");
-  }
-  
-  Serial.println("");
-  Serial.println("Connected");
-  Serial.println("");  
-}
-
 void setup() {
     Serial.begin(115200);
     delay(10);
 
     WiFiManager wm;
-
-    String chipID = String(ESP_getChipId(), HEX);
-    chipID.toUpperCase();
-
-    // SSID and PW for Config Portal
-    String AP_SSID = "ESP_" + chipID + "_AutoConnectAP";
-    String AP_PASS = "MyESP_" + chipID;
 
     // ledc
     // Set configuration of timer0 for high speed channels
