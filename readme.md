@@ -1,1 +1,1 @@
-esp soli moisture sensor v3
+april soli moisture sensor 
