@@ -1,6 +1,0 @@
-{
-    "flash_files" : {
-        "0x8000": ".pio/build/esp32s2/partitions.bin", 
-        "0x10000": ".pio/build/esp32s2/firmware.bin"
-    }
-}
