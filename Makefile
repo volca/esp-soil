@@ -9,3 +9,7 @@ flash:
 
 monitor:
 	pio device monitor
+
+archive:
+	mkdir -p build
+	git archive --format=zip --output=build/archive.zip HEAD
