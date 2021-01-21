@@ -173,9 +173,9 @@ void loop() {
     // blink
     for (int i = 0; i < 3; i++) {
         digitalWrite(PIN_LED, HIGH);   // turn the LED on (HIGH is the voltage level)
-        delay(1000);                       // wait for a second
+        delay(500);                       // wait for a second
         digitalWrite(PIN_LED, LOW);    // turn the LED off by making the voltage LOW
-        delay(1000);
+        delay(500);
     }
     Serial.printf("go to sleep\n");
     ESP.deepSleep(SLEEP_TIME);
