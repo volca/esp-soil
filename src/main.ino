@@ -11,6 +11,7 @@ const char *MY_PWD  = "<YOUR-PASSWORD>";
 
 WiFiMulti wifiMulti;
 
+const int PIN_LED   = 21;
 const int PIN_CLK   = 17;
 const int PIN_SOIL  = 9;
 
@@ -105,6 +106,7 @@ float readTemp() {
 void setup() {
     Serial.begin(115200);
     delay(1000);
+    pinMode(PIN_LED, OUTPUT);
 
     WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
 
@@ -168,6 +170,13 @@ void loop() {
     float batt = readBattery();
     Serial.printf("loop moisture: %d, temperature: %f batt: %f\n", soil_hum, temp, batt);
     sendData(batt, temp, soil_hum);
+    // blink
+    for (int i = 0; i < 3; i++) {
+        digitalWrite(PIN_LED, HIGH);   // turn the LED on (HIGH is the voltage level)
+        delay(1000);                       // wait for a second
+        digitalWrite(PIN_LED, LOW);    // turn the LED off by making the voltage LOW
+        delay(1000);
+    }
     Serial.printf("go to sleep\n");
     ESP.deepSleep(SLEEP_TIME);
 }
