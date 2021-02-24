@@ -2,6 +2,7 @@
 #include <Wire.h>
 #include "driver/adc.h"
 #include "driver/ledc.h"
+#include <WiFi.h>
 #include <WiFiMulti.h>
 #include <HTTPClient.h>
 
@@ -40,17 +41,29 @@ const adc_channel_t      BATTERY_CHANNEL     = ADC_CHANNEL_6;     // GPIO7
 const adc_atten_t        BATTERY_ATTEN       = ADC_ATTEN_DB_11;
 
 void connectWifi() {
-  Serial.print("Connecting to " + *MY_SSID);
-  wifiMulti.addAP(MY_SSID, MY_PWD);
+    int retry = 0;
+    Serial.print("Connecting to " + *MY_SSID);
+    wifiMulti.addAP(MY_SSID, MY_PWD);
 
-  while(wifiMulti.run() != WL_CONNECTED) {
-      delay(1000);
-      Serial.print(".");
-  }
-  
-  Serial.println("");
-  Serial.println("Connected");
-  Serial.println("");  
+    while(wifiMulti.run() != WL_CONNECTED) {
+        delay(1000);
+        Serial.print(".");
+
+        if(retry++ >= 10){
+            WiFi.beginSmartConfig();
+            while(1){
+                delay(1000);
+                if(WiFi.smartConfigDone()){
+                    Serial.println("SmartConfig Success");
+                    break;
+                }
+            }
+        }
+    }
+
+    Serial.println("");
+    Serial.println("Connected");
+    Serial.println("");  
 }
 
 float readBattery() {
@@ -86,7 +99,7 @@ float readTemp() {
     Wire.write(0X00);
 
     delay(500);
-  
+
     // Request 2 bytes , Msb first
     Wire.requestFrom(TMP_ADDR, 2 );
     // Read temperature as Celsius (the default)
@@ -101,6 +114,8 @@ float readTemp() {
 
         return temp;
     }
+
+    return 0;
 }
 
 void setup() {
@@ -157,7 +172,7 @@ void sendData(float batt, float temp, float soil_hum) {
     postStr += "&field3=";
     postStr += String(soil_hum);
     postStr += "\r\n\r\n";
-   
+
     int httpCode = http.POST(postStr);
     http.end();
 
@@ -173,9 +188,9 @@ void loop() {
     // blink
     for (int i = 0; i < 3; i++) {
         digitalWrite(PIN_LED, HIGH);   // turn the LED on (HIGH is the voltage level)
-        delay(500);                       // wait for a second
+        delay(300);                       // wait for a second
         digitalWrite(PIN_LED, LOW);    // turn the LED off by making the voltage LOW
-        delay(500);
+        delay(300);
     }
     Serial.printf("go to sleep\n");
     ESP.deepSleep(SLEEP_TIME);
