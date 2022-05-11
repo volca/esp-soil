@@ -6,9 +6,9 @@
 #include <WiFiMulti.h>
 #include <HTTPClient.h>
 
-String API_KEY      = "DYFQ21PKC0YJ6L6V";
-const char *MY_SSID = "siyue2L-dong"; 
-const char *MY_PWD  = "siyuexiongdi";
+String API_KEY      = "<YOUR-API-KEY>";
+const char *MY_SSID = "<YOUR-SSID>"; 
+const char *MY_PWD  = "<YOUR-PASSWORD>";
 
 WiFiMulti wifiMulti;
 
